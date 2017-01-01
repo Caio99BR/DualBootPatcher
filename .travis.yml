@@ -1,6 +1,8 @@
 ## Travis CI Script (JUST FOR TEST)
 # DualBootPatcher build from source (only "apk for debug release" for now)
+# Thanks @Rendyindo and @webmaster33
 
+dist: trusty
 sudo: required
 language: c
 
@@ -10,19 +12,12 @@ before_install:
   - export ENV_DIR=$(pwd)
 
 install:
-  # install dependencies
-  - sudo apt-get install libjansson-dev
-  - sudo apt-get install openssl
-  - sudo apt-get install libssl-dev
-  - sudo apt-get install libyaml-cpp-dev
-  - sudo apt-get install libboost-dev
-  - sudo apt-get install ccache
-  - sudo apt-get install python-minimal
-  - sudo apt-get install expect
+  # install missing dependencies on Ubuntu 14.04
+  - sudo apt install libjansson-dev libyaml-cpp-dev libboost-dev expect
 
   # install cmake 3.6.3, compiled with OPENSSL support!
   - cd ${ENV_DIR}/
-  - wget https://cmake.org/files/v3.6/cmake-3.6.3.tar.gz
+  - wget -q https://cmake.org/files/v3.6/cmake-3.6.3.tar.gz
   - tar xzf cmake-3.6.3.tar.gz
   - cd ${ENV_DIR}/cmake-3.6.3/
   - sudo sed -i 's|cmake_options="-DCMAKE_BOOTSTRAP=1"|cmake_options="-DCMAKE_BOOTSTRAP=1 -DCMAKE_USE_OPENSSL=ON"|' ${ENV_DIR}/cmake-3.6.3/bootstrap
@@ -34,15 +29,15 @@ install:
   - cd ${ENV_DIR}/
   - mkdir -p ${ENV_DIR}/android-ndk
   - cd ${ENV_DIR}/android-ndk
-  - wget https://dl.google.com/android/repository/android-ndk-r13b-linux-x86_64.zip
-  - unzip android-ndk-r13b-linux-x86_64.zip
+  - wget -q https://dl.google.com/android/repository/android-ndk-r13b-linux-x86_64.zip
+  - unzip -qq android-ndk-r13b-linux-x86_64.zip
 
   # get SDK R25.2.3
   - cd ${ENV_DIR}/
   - mkdir -p ${ENV_DIR}/android-sdk
   - cd ${ENV_DIR}/android-sdk
-  - wget https://dl.google.com/android/repository/tools_r25.2.3-linux.zip
-  - unzip tools_r25.2.3-linux.zip
+  - wget -q https://dl.google.com/android/repository/tools_r25.2.3-linux.zip
+  - unzip -qq tools_r25.2.3-linux.zip
 
   # set the ENV variables
   - export ANDROID_HOME=${ENV_DIR}/android-sdk
@@ -50,13 +45,8 @@ install:
   - export ANDROID_NDK=${ANDROID_NDK_HOME}
 
   # Update SDK, autoconfirm license questions
-  - expect -c "
-    set timeout -1;
-    spawn ${ENV_DIR}/android-sdk/tools/android update sdk --no-ui --all; 
-    expect { "Do you accept the license" { exp_send "y\r"; exp_continue }
-      eof
-    }
-    "
+  - cd ${ENV_DIR}/
+  - expect -c 'spawn android-sdk/tools/android update sdk --no-ui --all; expect "Do you accept the license"; send -- "y\r"; expect eof'
 
 script:
   # build DualBootPatcher! (only "apk for debug release" for now)
@@ -67,29 +57,10 @@ script:
   - rm -rf assets && cpack -G TXZ
   - make apk
 
-  # RESULT APK: 
+## Deploy DualBootPatcher to transfer.sh (only "apk for debug release" for now)
+after_success:
+  - export TRAVIS_CURRENT_DATE=$(date +"%d%m%y-%Hh%Mm%Ss")
   - ls -l ${TRAVIS_BUILD_DIR}/build/Android_GUI/build/outputs/apk/Android_GUI-debug.apk
   - md5sum ${TRAVIS_BUILD_DIR}/build/Android_GUI/build/outputs/apk/Android_GUI-debug.apk
+  - curl --upload-file ${TRAVIS_BUILD_DIR}/build/Android_GUI/build/outputs/apk/Android_GUI-debug.apk https://transfer.sh/Android_GUI-debug-${TRAVIS_CURRENT_DATE}.apk
 
-## [TEMPLATE] Deploy DualBootPatcher to Github Releases
-# 1. Clone this repository
-# 2. Copy '.travis.yml' to '.travis-original.yml' (you will need it after)
-# 3. Install Travis Client <https://github.com/travis-ci/travis.rb#installation>
-# 4. Run command: $(travis setup releases)
-#    After follow all previous steps, pickup ONLY the "secure" line
-#    and change it on '.travis-original.yml'
-# 5. Move '.travis-original.yml' to '.travis.yml'
-# 6. Commit it
-## NOTE: You need to configure TravisCI before anything <https://travis-ci.org/>
-
-## Deploy DualBootPatcher to Github Releases (only "apk for debug release" for now)
-deploy:
-  provider: releases
-  skip_cleanup: true
-#  api_key:
-#    secure: [PUT YOUR NEW SECURE API KEY HERE]
-  file_glob: true
-  file:
-    - "${TRAVIS_BUILD_DIR}/build/Android_GUI/build/outputs/apk/Android_GUI-debug.apk"
-  on:
-    branch: master
