@@ -30,8 +30,9 @@ install:
   - tar xzf openssl-1.1.0c.tar.gz
   - cd ${ENV_DIR}/openssl-1.1.0c
   - ./config shared --prefix=/usr/local/ssl --openssldir=/usr/local/ssl
-  - sudo make
-  - sudo make install
+  - 2>/dev/null 1>&2 sudo make
+  - 2>/dev/null 1>&2 sudo make install
+  - export PATH=${PATH}:/usr/local/ssl
 
   # install cmake 3.6.3, compiled with OPENSSL support!
   - cd ${ENV_DIR}/
