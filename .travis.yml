@@ -12,8 +12,26 @@ before_install:
   - export ENV_DIR=$(pwd)
 
 install:
-  # install missing dependencies on Ubuntu 14.04
-  - sudo apt install libjansson-dev libyaml-cpp-dev libboost-dev expect
+  # install all necessary dependencies
+  - sudo apt install ccache expect libboost-dev libjansson-dev libssl-dev libyaml-cpp-dev openssl python-minimal
+
+  # install updated jansson
+  - cd ${ENV_DIR}/
+  - wget -q http://www.digip.org/jansson/releases/jansson-2.9.tar.gz
+  - tar xzf jansson-2.9.tar.gz
+  - cd ${ENV_DIR}/jansson-2.9/
+  - ./configure
+  - sudo make
+  - sudo make install
+
+  # install updated OpenSSL
+  - cd ${ENV_DIR}/
+  - wget -q https://www.openssl.org/source/openssl-1.1.0c.tar.gz
+  - tar xzf openssl-1.1.0c.tar.gz
+  - cd ${ENV_DIR}/openssl-1.1.0c
+  - ./config shared --prefix=/usr/local/ssl --openssldir=/usr/local/ssl
+  - sudo make
+  - sudo make install
 
   # install cmake 3.6.3, compiled with OPENSSL support!
   - cd ${ENV_DIR}/
