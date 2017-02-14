@@ -30,19 +30,13 @@
 #  include <windows.h>
 #endif
 
-#ifndef __GLIBC__
-#  include "mbcommon/external/musl/memmem.h"
-#endif
-
 #include "mbcommon/string_p.h"
 #include "mbcommon/locale.h"
 
+#include "mbcommon/libc/string.h"
+
 #ifdef _WIN32
 #  define strncasecmp _strnicmp
-#endif
-
-#ifndef __GLIBC__
-#  define memmem musl_memmem
 #endif
 
 /*!
@@ -95,12 +89,6 @@ void * _mb_mempcpy(void *dest, const void *src, size_t n)
 #else
     return mempcpy(dest, src, n);
 #endif
-}
-
-void * _mb_memmem(const void *haystack, size_t haystacklen,
-                  const void *needle, size_t needlelen)
-{
-    return memmem(haystack, haystacklen, needle, needlelen);
 }
 
 // No wide-character version of the format functions is provided because it's
@@ -505,7 +493,7 @@ int mb_mem_replace(void **mem, size_t *mem_size,
     }
 
     while ((n == 0 || matches < n) && (ptr = static_cast<char *>(
-            _mb_memmem(ptr, ptr_remain, from, from_size)))) {
+            mb_memmem(ptr, ptr_remain, from, from_size)))) {
         // Resize buffer to accomodate data
         if (buf_size >= SIZE_MAX - (ptr - base_ptr)
                 || buf_size + (ptr - base_ptr) >= SIZE_MAX - to_size) {

@@ -13,9 +13,13 @@ set(MBCOMMON_SOURCES
     src/file/callbacks.cpp
     src/file/fd.cpp
     src/file/filename.cpp
+    src/file/memory.cpp
     src/file/posix.cpp
     src/file/vtable.cpp
     src/file.cpp
+    src/file_util.cpp
+    src/libc/stdio.cpp
+    src/libc/string.cpp
     src/locale.cpp
     src/string.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/gen/version.cpp
@@ -27,9 +31,11 @@ set(MBCOMMON_TESTS_SOURCES
     # Tests
     tests/file/test_callbacks.cpp
     tests/file/test_fd.cpp
+    tests/file/test_memory.cpp
     tests/file/test_posix.cpp
     tests/test_endian.cpp
     tests/test_file.cpp
+    tests/test_file_util.cpp
     tests/test_locale.cpp
     tests/test_string.cpp
 )
@@ -40,8 +46,21 @@ if(WIN32)
     list(APPEND MBCOMMON_TESTS_SOURCES tests/file/test_win32.cpp)
 endif()
 
-if(WIN32 OR ANDROID)
-    list(APPEND MBCOMMON_SOURCES src/external/musl/memmem.c)
+if(ANDROID)
+    list(APPEND MBCOMMON_SOURCES
+         src/external/musl/memmem.c)
+
+    if(${ANDROID_PLATFORM_LEVEL} LESS 21)
+        list(APPEND MBCOMMON_SOURCES
+             src/external/gnulib/getdelim.c
+             src/external/gnulib/getline.c)
+    endif()
+elseif(WIN32)
+    list(APPEND MBCOMMON_SOURCES
+         src/external/gnulib/getdelim.c
+         src/external/gnulib/getline.c
+         src/external/musl/memmem.c
+    )
 endif()
 
 add_definitions(-DMBCOMMON_BUILD -D_FILE_OFFSET_BITS=64)
