@@ -73,7 +73,7 @@ script:
   - cmake .. -DMBP_BUILD_TARGET=android -DMBP_BUILD_TYPE=debug
   - make
   - rm -rf assets && cpack -G TXZ
-  - make apk
+  - make apk --info
 
 ## Deploy DualBootPatcher to transfer.sh (only "apk for debug release" for now)
 after_success:
